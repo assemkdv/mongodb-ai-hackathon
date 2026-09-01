@@ -1,0 +1,37 @@
+# Render blueprint for the FastAPI backend (server/).
+# Render reads this file when you choose New -> Blueprint and pick this repo.
+services:
+  - type: web
+    name: rehearsal-room-api
+    runtime: python
+    # Same region as the Atlas cluster (AWS us-west-2), so database calls stay fast.
+    region: oregon
+    plan: free
+    rootDir: server
+    buildCommand: pip install uv && uv sync --frozen --no-dev
+    startCommand: .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: MONGODB_DB
+        value: counterpart
+      - key: VOYAGE_BASE_URL
+        value: https://ai.mongodb.com/v1
+      - key: CHAT_MODEL
+        value: claude-haiku-5-5
+      - key: CHAT_EFFORT
+        value: low
+      - key: ELEVENLABS_VOICE_ID
+        value: EXAVITQu4vr4xnSDxMaL
+      - key: ELEVENLABS_MODEL_ID
+        value: eleven_turbo_v2_5
+      # Secrets: Render asks for these when the blueprint is created.
+      - key: MONGODB_URI
+        sync: false
+      - key: VOYAGE_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
