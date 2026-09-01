@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # the API key and model settings live in server/.env
 
-MODEL = os.getenv("CHAT_MODEL", "claude-opus-5")
+MODEL = os.getenv("CHAT_MODEL", "claude-haiku-5-5")  # fastest to first word
 EFFORT = os.getenv("CHAT_EFFORT", "low")
 
 # Reads ANTHROPIC_API_KEY from the environment. One client, reused.

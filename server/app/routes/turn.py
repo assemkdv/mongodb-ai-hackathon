@@ -90,7 +90,8 @@ async def prepare(body: TurnRequest) -> Prepared:
             log.warning("correction failed: %s", error)
             result = {"degraded": f"Could not store that correction: {error}"}
 
-    system = build_system(context, await notes if notes else [])
+    director_note = body.text if body.kind == "note" else None
+    system = build_system(context, await notes if notes else [], director_note)
     messages = to_messages([h.model_dump() for h in body.history], body.kind, body.text)
     return Prepared(system, messages, session_id, result)
 

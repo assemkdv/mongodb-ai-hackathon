@@ -13,7 +13,7 @@ KNOWN_CATEGORIES = [
 ]
 
 
-def build_system(context: dict, notes: list[dict]) -> str:
+def build_system(context: dict, notes: list[dict], director_note: str | None = None) -> str:
     c = context["counterpart"]
     traits = context["activeTraits"]
 
@@ -32,6 +32,15 @@ def build_system(context: dict, notes: list[dict]) -> str:
         memory = (
             "\nRELEVANT PAST NOTES (what you have been told about how you behave "
             "in moments like this)\n" + "\n".join(f"- {n['content']}" for n in notes) + "\n"
+        )
+
+    # A retake: the director just corrected how this person behaves.
+    retake = ""
+    if director_note:
+        retake = (
+            f"\nDIRECTOR NOTE (just given): {director_note}\n"
+            "Answer the last thing said to you again, the way this note says you "
+            "would. Same intent, new delivery. Stay in character.\n"
         )
 
     user_role = c.get("userRole")
@@ -60,7 +69,7 @@ If pushed: {c['escalation']}
 REACTIONS
 Hardens: {hardens}
 Softens: {softens}
-{memory}
+{memory}{retake}
 SPEECH
 {speech}
 
@@ -80,7 +89,13 @@ Reply with exactly one delivery tag and one line. Nothing else."""
 
 
 def to_messages(history: list[dict], kind: str, text: str) -> list[dict]:
-    """The conversation so far, in the shape the Claude API expects."""
+    """The conversation so far, in the shape the Claude API expects.
+
+    kind "line": the user's new line goes at the end.
+    kind "note": a retake. The conversation is rewound to just before the
+    counterpart's last reply, so Claude answers that same moment again (the
+    director's note itself goes into the system prompt, not the dialogue).
+    """
     messages = []
     for turn in history:
         if turn["role"] == "user":
@@ -89,11 +104,10 @@ def to_messages(history: list[dict], kind: str, text: str) -> list[dict]:
             messages.append({"role": "assistant", "content": turn["text"]})
 
     if kind == "note":
-        messages.append({
-            "role": "user",
-            "content": "[The director has corrected you. Deliver your last line again, "
-            "the way the correction says you would. Same intent, new delivery.]",
-        })
+        while messages and messages[-1]["role"] == "assistant":
+            messages.pop()  # rewind past the line being redone
+        if not messages:
+            messages.append({"role": "user", "content": "(The conversation begins.)"})
     else:
         messages.append({"role": "user", "content": text})
 

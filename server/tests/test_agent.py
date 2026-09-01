@@ -64,3 +64,13 @@ def test_messages_always_start_with_the_user():
     messages = to_messages(history, "line", "Discount?")
     assert messages[0] == {"role": "user", "content": "Hi"}
     assert messages[-1] == {"role": "user", "content": "Discount?"}
+
+
+def test_retake_rewinds_to_the_users_last_line():
+    history = [
+        {"role": "user", "text": "Can you support my promotion?"},
+        {"role": "persona", "text": "Let's take this offline."},
+        {"role": "director", "text": "She'd be blunt here."},
+    ]
+    messages = to_messages(history, "note", "She'd be blunt here.")
+    assert messages == [{"role": "user", "content": "Can you support my promotion?"}]
