@@ -1,8 +1,9 @@
 /**
- * Client for the FastAPI + MongoDB backend (server/app/main.py).
+ * Client for the FastAPI backend (server/).
  *
- * Only the Next.js route layer talks to this — never the browser. That keeps
- * one origin for the app and leaves the backend free to stay on localhost.
+ * Only the Next.js route layer talks to this, never the browser. That keeps
+ * one origin for the app, keeps every API key on the server, and lets the
+ * backend stay on localhost in development.
  */
 
 const BASE = process.env.BACKEND_URL || "http://localhost:3001";
@@ -62,11 +63,6 @@ export interface CounterpartContext {
   evidence: Evidence[];
 }
 
-export interface CorrectionResult {
-  supersededTrait: Trait;
-  activeTrait: Trait;
-}
-
 export class BackendError extends Error {
   constructor(
     message: string,
@@ -102,91 +98,38 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/**
+ * Passes a browser request straight through to the backend and streams the
+ * response back unchanged (status, headers, body). Used for the routes whose
+ * logic lives entirely in FastAPI: chat turns, speech, persona creation.
+ */
+export async function forward(path: string, request: Request): Promise<Response> {
+  try {
+    const upstream = await fetch(`${BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: await request.text(),
+      // If the browser cancels (barge-in), cancel the backend call too.
+      signal: request.signal,
+      cache: "no-store",
+    });
+    const headers = new Headers();
+    for (const name of ["content-type", "cache-control", "x-delivery"]) {
+      const value = upstream.headers.get(name);
+      if (value) headers.set(name, value);
+    }
+    return new Response(upstream.body, { status: upstream.status, headers });
+  } catch (err) {
+    if (request.signal.aborted) return new Response(null, { status: 499 });
+    console.error(`[backend] ${path}`, err);
+    return Response.json({ error: `Backend unreachable at ${BASE}` }, { status: 503 });
+  }
+}
+
 export function listCounterparts(): Promise<{ counterparts: CounterpartSummary[] }> {
   return call("/api/counterparts");
 }
 
-/** Shape the backend expects when creating a person. */
-export interface CounterpartDraft {
-  name: string;
-  role: string;
-  userRole?: string;
-  scenario: string;
-  wants: string;
-  concessions: string[];
-  boundaries: string[];
-  escalation: string;
-  speechRules: {
-    maximumWords: number;
-    fragmentsWhenTense: boolean;
-    usesFiller: boolean;
-  };
-  /** Keyed by trait category — these become the versioned, correctable traits. */
-  traits: Record<string, { claim: string; confidence: number }>;
-}
-
-export function createCounterpart(
-  draft: CounterpartDraft,
-): Promise<{ counterpart: Counterpart; traits: Trait[] }> {
-  return call("/api/counterparts", {
-    method: "POST",
-    body: JSON.stringify(draft),
-  });
-}
-
 export function getContext(counterpartId: string): Promise<CounterpartContext> {
   return call(`/api/counterparts/${counterpartId}/context`);
-}
-
-export function createSession(counterpartId: string): Promise<{ _id: string }> {
-  return call("/api/sessions", {
-    method: "POST",
-    body: JSON.stringify({ counterpartId }),
-  });
-}
-
-export function logTurn(
-  sessionId: string,
-  speaker: "user" | "counterpart",
-  text: string,
-  delivery?: unknown,
-): Promise<unknown> {
-  return call(`/api/sessions/${sessionId}/turns`, {
-    method: "POST",
-    body: JSON.stringify({ speaker, text, delivery: delivery ?? null }),
-  });
-}
-
-export interface RelevantNote {
-  _id: string;
-  content: string;
-  score: number;
-}
-
-/** Atlas Vector Search: the past notes closest in meaning to `text`. */
-export async function searchNotes(
-  counterpartId: string,
-  text: string,
-): Promise<RelevantNote[]> {
-  const { results } = await call<{ results: RelevantNote[] }>(
-    `/api/counterparts/${counterpartId}/search`,
-    { method: "POST", body: JSON.stringify({ text, limit: 3 }) },
-  );
-  return results;
-}
-
-/**
- * Supersedes the active trait in `category` with the corrected claim.
- * The backend runs this as a transaction: evidence insert, old trait marked
- * superseded, new trait inserted at version + 1.
- */
-export function submitCorrection(
-  counterpartId: string,
-  category: string,
-  correction: string,
-): Promise<CorrectionResult> {
-  return call(`/api/counterparts/${counterpartId}/corrections`, {
-    method: "POST",
-    body: JSON.stringify({ category, correction }),
-  });
 }

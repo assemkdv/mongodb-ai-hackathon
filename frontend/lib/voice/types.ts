@@ -8,15 +8,6 @@ export interface Delivery {
   manner: Manner;
 }
 
-/** ElevenLabs `voice_settings` payload. */
-export interface VoiceSettings {
-  stability: number;
-  similarity_boost: number;
-  style: number;
-  use_speaker_boost: boolean;
-  speed: number;
-}
-
 export type TurnRole = "user" | "persona" | "director" | "system";
 
 export interface Turn {
@@ -31,7 +22,7 @@ export interface Turn {
   at: number;
 }
 
-/** POST /api/chat request body. Contract shared with Member 2. */
+/** POST /api/chat request body (forwarded to FastAPI POST /api/turn). */
 export interface ChatRequest {
   sessionId: string;
   personaId: string;
@@ -41,7 +32,7 @@ export interface ChatRequest {
   history: Turn[];
 }
 
-/** POST /api/chat response body. Contract shared with Member 2. */
+/** POST /api/chat response body. */
 export interface ChatResponse {
   /** The persona's line, delivery tag included. */
   reply: string;

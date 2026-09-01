@@ -16,9 +16,10 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
+from app.agent import claude
 from app.db import get_client, get_db, new_id
 from app.embeddings import embed
-from app.schemas import Correction, NewCounterpart
+from app.schemas import Correction, NewCounterpart, PersonaDescription
 
 router = APIRouter(prefix="/api/counterparts")
 log = logging.getLogger("uvicorn.error")
@@ -111,6 +112,31 @@ async def create_counterpart(body: NewCounterpart):
         await session.with_transaction(write)
 
     return {"counterpart": counterpart, "traits": traits}
+
+
+@router.post("/generate", status_code=201)
+async def generate_counterpart(body: PersonaDescription):
+    """"My landlord Marcus, raising rent 22%..." -> a stored counterpart.
+
+    Claude fills in the full profile (including one trait per category, so
+    every behaviour can be corrected later), then it's saved like any other."""
+    try:
+        draft = await claude.draft_persona(body.description)
+    except claude.Refused:
+        raise HTTPException(422, "Could not build a persona from that description.")
+
+    created = await create_counterpart(NewCounterpart.model_validate(draft))
+    c = created["counterpart"]
+    return {
+        "counterpart": {
+            "_id": c["_id"],
+            "name": c["name"],
+            "role": c["role"],
+            "scenario": c["scenario"],
+            "userRole": c["userRole"],
+            "activeTraits": len(created["traits"]),
+        }
+    }
 
 
 @router.get("/{counterpart_id}/context")

@@ -46,6 +46,29 @@ class SearchQuery(BaseModel):
     limit: int = Field(default=3, ge=1, le=10)
 
 
+class PersonaDescription(BaseModel):
+    description: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
+
+
+class HistoryTurn(BaseModel):
+    role: str  # "user" | "persona" | "director" | "system"
+    text: str
+
+
+class TurnRequest(BaseModel):
+    """One rehearsal turn, sent by the browser."""
+    sessionId: Text  # the browser's id for this rehearsal
+    personaId: Text  # e.g. "dana-reyes"
+    kind: Literal["line", "note"]  # "line" = in the scene, "note" = director correction
+    text: Text
+    history: list[HistoryTurn] = []
+
+
+class TtsRequest(BaseModel):
+    text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+    previousText: str | None = None  # last line, so the voice keeps its prosody
+
+
 class NewSession(BaseModel):
     counterpartId: Text
 

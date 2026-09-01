@@ -74,7 +74,7 @@ flowchart TD
     CHAT --> LOG["Persist transcript asynchronously"]
 ```
 
-The Next.js application acts as the orchestration layer. The browser communicates only with same-origin Next.js routes. Those routes call the FastAPI service, Claude, and ElevenLabs without exposing API keys or the MongoDB connection string to the client.
+The FastAPI backend is the voice agent: it loads the counterpart from MongoDB, runs Atlas Vector Search, calls Claude, and streams speech from ElevenLabs. The browser talks only to same-origin Next.js routes, which forward to FastAPI, so no API key or connection string ever reaches the client.
 
 ## The Director Interrupt
 
@@ -221,7 +221,7 @@ Stability, style, and speed are clamped to tested ranges to prevent robotic or s
 | Speech input  | Web Speech API                   | Live and final browser transcription                                  |
 | Reasoning     | Anthropic Claude                 | Persona generation, note classification, and in-character replies     |
 | Speech output | ElevenLabs Turbo v2.5            | Low-latency streaming voice synthesis                                 |
-| API           | Python, FastAPI, PyMongo (async) | Counterparts, sessions, corrections, evidence, and debriefs           |
+| Voice agent   | Python, FastAPI, PyMongo (async) | Turn orchestration, Claude calls, TTS streaming, corrections, sessions |
 | Memory        | MongoDB Atlas                    | Versioned traits, supporting evidence, transcripts, and session state |
 | Retrieval     | Atlas Vector Search, Voyage AI   | Finds the past director notes most relevant to each line              |
 | Deployment    | Vercel, Render                   | Next.js frontend on Vercel, FastAPI backend on Render                 |
@@ -328,22 +328,8 @@ Open a second terminal:
 
 ```bash
 cd frontend
-cp .env.local.example .env.local
+cp .env.local.example .env.local   # only BACKEND_URL; all API keys live in server/.env
 npm install
-```
-
-Configure `frontend/.env.local`:
-
-```dotenv
-ANTHROPIC_API_KEY=sk-ant-...
-CHAT_MODEL=claude-opus-5
-CHAT_EFFORT=low
-
-ELEVENLABS_API_KEY=sk_...
-ELEVENLABS_VOICE_ID=EXAVITQu4vr4xnSDxMaL
-ELEVENLABS_MODEL_ID=eleven_turbo_v2_5
-
-BACKEND_URL=http://localhost:3001
 ```
 
 Start the frontend:
@@ -415,15 +401,19 @@ The FastAPI backend stores the profile and all five initial traits inside a Mong
 | `POST` | `/api/sessions/:sessionId/turns`    | Append a user or counterpart turn               |
 | `POST` | `/api/sessions/:sessionId/debrief`  | Store observations and complete a session       |
 
-### Next.js orchestration routes
+| `POST` | `/api/turn`                         | One rehearsal turn (line or director note)      |
+| `POST` | `/api/tts`                          | Stream the reply as MPEG audio                  |
+| `POST` | `/api/counterparts/generate`        | Free-text description → stored counterpart      |
 
-| Method | Endpoint                        | Description                                                   |
-| ------ | ------------------------------- | ------------------------------------------------------------- |
-| `POST` | `/api/chat`                     | Load context, apply notes, generate a reply, and log the turn |
-| `GET`  | `/api/counterparts`             | Retrieve the counterpart list                                 |
-| `POST` | `/api/counterparts`             | Convert a free-text description into a stored persona         |
-| `GET`  | `/api/traits?counterpartId=...` | Read the current active trait model                           |
-| `POST` | `/api/tts`                      | Parse delivery instructions and stream MPEG audio             |
+### Next.js routes (thin pass-throughs to FastAPI)
+
+| Method | Endpoint                        | Forwards to                         |
+| ------ | ------------------------------- | ----------------------------------- |
+| `POST` | `/api/chat`                     | `POST /api/turn`                    |
+| `POST` | `/api/tts`                      | `POST /api/tts`                     |
+| `GET`  | `/api/counterparts`             | `GET /api/counterparts`             |
+| `POST` | `/api/counterparts`             | `POST /api/counterparts/generate`   |
+| `GET`  | `/api/traits?counterpartId=...` | `GET /api/counterparts/:id/context` |
 
 ## Data model
 
@@ -499,7 +489,7 @@ The repository contains two deployable applications:
 1. Deploy `server/` as a Python web service (for example on Render) with the start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and configure `MONGODB_URI`.
 2. Deploy `frontend/` as a Next.js project.
 3. Set `BACKEND_URL` in the frontend deployment to the deployed backend URL.
-4. Add the Anthropic and ElevenLabs credentials to the frontend’s server-side environment variables.
+4. Put every API key (Atlas, Voyage, Anthropic, ElevenLabs) in the backend's environment. The frontend only needs `BACKEND_URL`.
 
 Keep every credential server-side. None of the environment variables in this README should use the `NEXT_PUBLIC_` prefix.
 

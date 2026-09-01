@@ -4,7 +4,7 @@
 
 ```bash
 cd server
-cp .env.example .env          # then fill in MONGODB_URI and VOYAGE_API_KEY
+cp .env.example .env          # then fill in the Atlas, Voyage, Anthropic and ElevenLabs keys
 uv run python seed.py                         # 3 built-in counterparts
 uv run python -m scripts.backfill_embeddings  # embed their notes
 uv run python -m scripts.create_vector_index  # Atlas Vector Search index (once)
@@ -40,6 +40,12 @@ MONGODB_URI="mongodb://localhost:27018/?directConnection=true" uv run pytest -q
 | `app/routes/sessions.py` | Rehearsal sessions, transcript turns, debriefs |
 | `app/routes/search.py` | Atlas Vector Search: top 3 past notes relevant to a line, with timing |
 | `app/embeddings.py` | Voyage AI: text in, 1024-number embedding out |
+| `app/routes/turn.py` | **The voice agent:** one rehearsal turn (context + vector search + Claude + transcript) |
+| `app/routes/tts.py` | Streams a line of speech from ElevenLabs with voice settings from the delivery tag |
+| `app/agent/claude.py` | Every Claude call: in-character reply, director-note classifier, persona drafting |
+| `app/agent/prompt.py` | Builds the persona prompt from active traits + vector search notes |
+| `app/agent/delivery.py` | `[pace\|energy\|manner]` tag → ElevenLabs voice settings |
+| `app/http.py` | One shared HTTP client for Voyage and ElevenLabs |
 | `scripts/create_vector_index.py` | Creates the `evidence_vector_index` in Atlas |
 | `scripts/backfill_embeddings.py` | Embeds notes saved before vector search existed |
 | `tests/test_api.py` | One test per behaviour, run against a real MongoDB |
@@ -57,3 +63,6 @@ MONGODB_URI="mongodb://localhost:27018/?directConnection=true" uv run pytest -q
 | POST | `/api/sessions` | Start a rehearsal |
 | POST | `/api/sessions/{id}/turns` | Append a line to the transcript |
 | POST | `/api/sessions/{id}/debrief` | Save the debrief and close the session |
+| POST | `/api/turn` | One rehearsal turn: line or director note → in-character reply |
+| POST | `/api/tts` | Stream the reply as audio (MPEG) |
+| POST | `/api/counterparts/generate` | Free-text description → stored counterpart (Claude) |

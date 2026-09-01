@@ -9,7 +9,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.117.1",
     "next": "^15.5.23",
     "react": "19.1.1",
     "react-dom": "19.1.1"
