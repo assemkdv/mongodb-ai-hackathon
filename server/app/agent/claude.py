@@ -31,18 +31,37 @@ def _text(message) -> str:
     return "".join(b.text for b in message.content if b.type == "text").strip()
 
 
+def _fast_settings() -> dict:
+    """Keep replies quick: a rehearsal partner that pauses to deliberate stops
+    feeling like a person, and short in-character lines don't need extended
+    reasoning. Each model family switches thinking off a little differently."""
+    if MODEL.startswith("claude-sonnet-5-5"):
+        thinking = {"type": "between_tools"}
+    elif MODEL.startswith(("claude-opus-5-5", "claude-fable")):
+        return {"output_config": {"effort": EFFORT}}  # thinking can't be disabled; low effort instead
+    else:
+        thinking = {"type": "disabled"}
+    return {"thinking": thinking, "output_config": {"effort": EFFORT}}
+
+
 async def reply(system: str, messages: list[dict]) -> str:
+    """The whole reply at once (used by the HTTP endpoint)."""
     message = await client.messages.create(
-        model=MODEL,
-        max_tokens=1024,
-        # A rehearsal partner that pauses to deliberate stops feeling like a
-        # person. Short in-character lines don't need extended reasoning.
-        thinking={"type": "disabled"},
-        output_config={"effort": EFFORT},
-        system=system,
-        messages=messages,
+        model=MODEL, max_tokens=1024, system=system, messages=messages, **_fast_settings()
     )
     return _text(message)
+
+
+async def stream_reply(system: str, messages: list[dict]):
+    """The reply token by token, as Claude writes it (used by the WebSocket).
+    Lets the voice start speaking before the sentence is finished."""
+    async with client.messages.stream(
+        model=MODEL, max_tokens=1024, system=system, messages=messages, **_fast_settings()
+    ) as stream:
+        async for text in stream.text_stream:
+            yield text
+        if (await stream.get_final_message()).stop_reason == "refusal":
+            raise Refused()
 
 
 async def classify_note(active_traits: list[dict], note: str) -> list[dict]:
@@ -58,7 +77,7 @@ async def classify_note(active_traits: list[dict], note: str) -> list[dict]:
     message = await client.messages.create(
         model=MODEL,
         max_tokens=1024,
-        thinking={"type": "disabled"},
+        thinking=_fast_settings().get("thinking", anthropic.omit),
         output_config={
             "effort": "low",
             "format": {
@@ -179,7 +198,7 @@ async def draft_persona(description: str) -> dict:
     message = await client.messages.create(
         model=MODEL,
         max_tokens=2048,
-        thinking={"type": "disabled"},
+        thinking=_fast_settings().get("thinking", anthropic.omit),
         output_config={"effort": "low", "format": {"type": "json_schema", "schema": PERSONA_SCHEMA}},
         system="You build behavioural models of people for rehearsal practice. Given "
         "a description of someone and a situation, produce a model of how they "

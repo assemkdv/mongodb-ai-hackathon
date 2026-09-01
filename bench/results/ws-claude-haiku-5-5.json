@@ -1,0 +1,95 @@
+{
+  "label": "ws-claude-haiku-5-5",
+  "summary": {
+    "time_to_first_audio_ms": {
+      "median": 1254,
+      "p95": 1400
+    },
+    "server_prepare_ms": {
+      "median": 222,
+      "p95": 532
+    }
+  },
+  "turns": [
+    {
+      "time_to_first_audio_ms": 1568,
+      "server_prepare_ms": 532
+    },
+    {
+      "time_to_first_audio_ms": 1325,
+      "server_prepare_ms": 539
+    },
+    {
+      "time_to_first_audio_ms": 1400,
+      "server_prepare_ms": 208
+    },
+    {
+      "time_to_first_audio_ms": 1141,
+      "server_prepare_ms": 267
+    },
+    {
+      "time_to_first_audio_ms": 1371,
+      "server_prepare_ms": 306
+    },
+    {
+      "time_to_first_audio_ms": 1132,
+      "server_prepare_ms": 216
+    },
+    {
+      "time_to_first_audio_ms": 1078,
+      "server_prepare_ms": 211
+    },
+    {
+      "time_to_first_audio_ms": 1086,
+      "server_prepare_ms": 210
+    },
+    {
+      "time_to_first_audio_ms": 1167,
+      "server_prepare_ms": 209
+    },
+    {
+      "time_to_first_audio_ms": 1170,
+      "server_prepare_ms": 210
+    },
+    {
+      "time_to_first_audio_ms": 1196,
+      "server_prepare_ms": 293
+    },
+    {
+      "time_to_first_audio_ms": 1393,
+      "server_prepare_ms": 295
+    },
+    {
+      "time_to_first_audio_ms": 1235,
+      "server_prepare_ms": 213
+    },
+    {
+      "time_to_first_audio_ms": 1369,
+      "server_prepare_ms": 222
+    },
+    {
+      "time_to_first_audio_ms": 1160,
+      "server_prepare_ms": 216
+    },
+    {
+      "time_to_first_audio_ms": 1245,
+      "server_prepare_ms": 223
+    },
+    {
+      "time_to_first_audio_ms": 1351,
+      "server_prepare_ms": 297
+    },
+    {
+      "time_to_first_audio_ms": 1262,
+      "server_prepare_ms": 218
+    },
+    {
+      "time_to_first_audio_ms": 1315,
+      "server_prepare_ms": 246
+    },
+    {
+      "time_to_first_audio_ms": 1291,
+      "server_prepare_ms": 245
+    }
+  ]
+}

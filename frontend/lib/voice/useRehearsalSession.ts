@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AgentSocket } from "./agentSocket";
 import { parseDelivery } from "./delivery";
 import type { ChatRequest, ChatResponse, Turn } from "./types";
 import { useSpeechRecognition } from "./useSpeechRecognition";
@@ -77,39 +78,42 @@ export function useRehearsalSession({
   /** True between start() and end(). Typed input works outside that window. */
   const startedRef = useRef(false);
 
+  /** Numbers each turn, so a cancelled one can tell it has been replaced. */
+  const turnCountRef = useRef(0);
+
+  /** One WebSocket to the voice agent for the whole rehearsal. */
+  const socketRef = useRef<AgentSocket | null>(null);
+  const agent = useCallback(() => (socketRef.current ??= new AgentSocket()), []);
+  useEffect(() => () => socketRef.current?.close(), []);
+
+  /** Stops whatever the persona is saying, on the speaker and on the server. */
+  const silence = useCallback(() => {
+    turnCountRef.current += 1;
+    socketRef.current?.cancel();
+    playback.stop();
+  }, [playback]);
+
   const send = useCallback(
     async (kind: "line" | "note", text: string) => {
+      const thisTurn = ++turnCountRef.current;
+      const replaced = () => turnCountRef.current !== thisTurn;
       setPhaseSafe("thinking");
       setError(null);
 
-      try {
-        const payload: ChatRequest = {
-          sessionId,
-          personaId,
-          kind,
-          text,
-          history: turnsRef.current,
-        };
+      const payload: ChatRequest = {
+        sessionId,
+        personaId,
+        kind,
+        text,
+        history: turnsRef.current,
+      };
 
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const detail = await res.json().catch(() => ({ error: res.statusText }));
-          throw new Error(detail.error || `Chat failed (${res.status})`);
-        }
-
-        const data: ChatResponse = await res.json();
+      /** Shows the reply in the transcript; returns the spoken line. */
+      const showReply = (data: ChatResponse) => {
         if (data.memoryWrite) setLastMemoryWrite(data.memoryWrite);
-        // The scene can run without Mongo; the user just needs to know it is.
         if (data.degraded) setError(data.degraded);
-
         const { delivery, line } = parseDelivery(data.reply ?? "");
         if (!line) throw new Error("The persona returned an empty line");
-
         appendTurn({
           id: nextId(),
           role: "persona",
@@ -118,14 +122,42 @@ export function useRehearsalSession({
           retake: kind === "note",
           at: Date.now(),
         });
+        return line;
+      };
 
-        setPhaseSafe("speaking");
-        await playback.speak(data.reply, previousLineRef.current);
-        previousLineRef.current = line;
+      try {
+        const turn = await agent().startTurn(payload).catch(() => null);
+
+        if (turn) {
+          // WebSocket: audio starts playing while Claude is still writing.
+          const playing = playback.play(turn.audio, () => setPhaseSafe("speaking"));
+          const line = showReply(await turn.reply);
+          await playing;
+          previousLineRef.current = line;
+        } else {
+          // Fallback if the socket can't connect: two HTTP calls.
+          const res = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) {
+            const detail = await res.json().catch(() => ({ error: res.statusText }));
+            throw new Error(detail.error || `Chat failed (${res.status})`);
+          }
+          const data: ChatResponse = await res.json();
+          const line = showReply(data);
+          setPhaseSafe("speaking");
+          await playback.speak(data.reply, previousLineRef.current);
+          previousLineRef.current = line;
+        }
 
         // Hand the floor back, unless the user interrupted while it spoke.
-        if (phaseRef.current === "speaking") settle();
+        if (replaced()) return;
+        if (phaseRef.current === "speaking" || phaseRef.current === "thinking") settle();
       } catch (err) {
+        // Cut off on purpose: a newer turn, a director note, or the session ended.
+        if (replaced() || phaseRef.current === "directing" || phaseRef.current === "idle") return;
         const message = err instanceof Error ? err.message : "Something went wrong";
         setError(message);
         settle();
@@ -141,7 +173,7 @@ export function useRehearsalSession({
         }
       }
     },
-    [appendTurn, personaId, playback, sessionId, setPhaseSafe],
+    [agent, appendTurn, personaId, playback, sessionId, setPhaseSafe],
   );
 
   const handleFinalTranscript = useCallback(
@@ -175,9 +207,9 @@ export function useRehearsalSession({
   const end = useCallback(() => {
     startedRef.current = false;
     mic.stop();
-    playback.stop();
+    silence();
     setPhaseSafe("idle");
-  }, [mic, playback, setPhaseSafe]);
+  }, [mic, silence, setPhaseSafe]);
 
   /** Same path a spoken utterance takes, minus the microphone. */
   const submit = useCallback(
@@ -185,7 +217,7 @@ export function useRehearsalSession({
       const trimmed = text.trim();
       if (!trimmed || phaseRef.current === "thinking") return;
       mic.stop();
-      playback.stop();
+      silence();
       appendTurn({
         id: nextId(),
         role: kind === "note" ? "director" : "user",
@@ -194,7 +226,7 @@ export function useRehearsalSession({
       });
       void send(kind, trimmed);
     },
-    [appendTurn, mic, playback, send],
+    [appendTurn, mic, silence, send],
   );
 
   /** Straight to the speaker — proves the ElevenLabs half in isolation. */
@@ -210,11 +242,11 @@ export function useRehearsalSession({
    */
   const interrupt = useCallback(() => {
     if (phaseRef.current === "idle" || phaseRef.current === "directing") return;
-    playback.stop();
+    silence();
     mic.stop();
     setPhaseSafe("directing");
     mic.start();
-  }, [mic, playback, setPhaseSafe]);
+  }, [mic, silence, setPhaseSafe]);
 
   const cancelInterrupt = useCallback(() => {
     if (phaseRef.current !== "directing") return;

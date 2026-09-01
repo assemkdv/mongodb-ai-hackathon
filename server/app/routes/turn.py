@@ -14,6 +14,7 @@ its last line the corrected way.
 
 import asyncio
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import anthropic
@@ -34,6 +35,37 @@ log = logging.getLogger("uvicorn.error")
 
 @router.post("/api/turn")
 async def turn(body: TurnRequest, background: BackgroundTasks):
+    """HTTP version: waits for Claude's whole reply. The WebSocket version
+    (routes/voice_socket.py) streams it instead; both share prepare()."""
+    prepared = await prepare(body)
+
+    try:
+        raw = await claude.reply(prepared.system, prepared.messages)
+    except claude.Refused:
+        raise HTTPException(422, "The persona declined to respond to that.")
+    except anthropic.APIError as error:
+        log.error("Claude error: %s", error)
+        raise HTTPException(502, "The persona could not respond.")
+
+    reply = first_reply(raw)
+    if not reply:
+        raise HTTPException(502, "Empty reply from the model")
+
+    # Saving the transcript must never delay the reply the user is waiting for.
+    background.add_task(save_transcript, prepared.session_id, body, reply)
+    return {"reply": reply, **prepared.result}
+
+
+@dataclass
+class Prepared:
+    system: str  # the persona prompt
+    messages: list[dict]  # the conversation for Claude
+    session_id: str
+    result: dict  # correction / memoryWrite / degraded, sent back to the browser
+
+
+async def prepare(body: TurnRequest) -> Prepared:
+    """Everything that happens before Claude is asked for a line."""
     counterpart_id = body.personaId.replace("-", "_")  # "dana-reyes" -> "dana_reyes"
 
     # Start the vector search now and let it run while we load everything else.
@@ -43,8 +75,10 @@ async def turn(body: TurnRequest, background: BackgroundTasks):
         else None
     )
 
-    context = await get_context(counterpart_id)
-    session_id = await ensure_session(body.sessionId, counterpart_id)
+    # Independent database reads run at the same time, not one after another.
+    context, session_id = await asyncio.gather(
+        get_context(counterpart_id), ensure_session(body.sessionId, counterpart_id)
+    )
 
     result = {}
     if body.kind == "note":
@@ -57,22 +91,8 @@ async def turn(body: TurnRequest, background: BackgroundTasks):
             result = {"degraded": f"Could not store that correction: {error}"}
 
     system = build_system(context, await notes if notes else [])
-
-    try:
-        raw = await claude.reply(system, to_messages([h.model_dump() for h in body.history], body.kind, body.text))
-    except claude.Refused:
-        raise HTTPException(422, "The persona declined to respond to that.")
-    except anthropic.APIError as error:
-        log.error("Claude error: %s", error)
-        raise HTTPException(502, "The persona could not respond.")
-
-    reply = first_reply(raw)
-    if not reply:
-        raise HTTPException(502, "Empty reply from the model")
-
-    # Saving the transcript must never delay the reply the user is waiting for.
-    background.add_task(save_transcript, session_id, body, reply)
-    return {"reply": reply, **result}
+    messages = to_messages([h.model_dump() for h in body.history], body.kind, body.text)
+    return Prepared(system, messages, session_id, result)
 
 
 async def relevant_notes(counterpart_id: str, text: str) -> list[dict]:

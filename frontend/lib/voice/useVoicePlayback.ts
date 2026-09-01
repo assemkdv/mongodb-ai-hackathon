@@ -19,12 +19,18 @@ export interface VoicePlayback {
   error: string | null;
   /** Synthesises and plays a line. Resolves when playback finishes or is cut off. */
   speak: (text: string, previousText?: string) => Promise<void>;
+  /**
+   * Plays MP3 audio from any stream (e.g. the voice agent's WebSocket),
+   * starting with the first chunk. Calls onStart when sound begins.
+   */
+  play: (audio: ReadableStream<Uint8Array>, onStart?: () => void) => Promise<void>;
   /** Cuts the current line off mid-word. Used for barge-in and director notes. */
   stop: () => void;
 }
 
 /**
- * Plays persona lines through the /api/tts proxy.
+ * Plays persona lines, either streamed over the voice agent's WebSocket
+ * (play) or fetched from the /api/tts fallback (speak).
  *
  * Audio is streamed into a MediaSource so the first syllable lands while the
  * rest is still being generated — a rehearsal partner that waits two seconds
@@ -39,6 +45,8 @@ export function useVoicePlayback(): VoicePlayback {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const objectUrlRef = useRef<string | null>(null);
+  /** Bumped on every stop(), so a line still being fetched knows it was cut off. */
+  const stopCountRef = useRef(0);
 
   const getAudio = useCallback(() => {
     if (!audioRef.current) {
@@ -57,6 +65,7 @@ export function useVoicePlayback(): VoicePlayback {
   }, []);
 
   const stop = useCallback(() => {
+    stopCountRef.current += 1;
     abortRef.current?.abort();
     abortRef.current = null;
     const audio = audioRef.current;
@@ -72,8 +81,8 @@ export function useVoicePlayback(): VoicePlayback {
 
   useEffect(() => stop, [stop]);
 
-  const speak = useCallback(
-    async (text: string, previousText?: string) => {
+  const play = useCallback(
+    async (stream: ReadableStream<Uint8Array>, onStart?: () => void) => {
       stop();
 
       const controller = new AbortController();
@@ -81,34 +90,24 @@ export function useVoicePlayback(): VoicePlayback {
       setLoading(true);
       setError(null);
 
+      const started = () => {
+        setLoading(false);
+        setSpeaking(true);
+        onStart?.();
+      };
+
       try {
-        const res = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, previousText }),
-          signal: controller.signal,
-        });
-
-        if (!res.ok || !res.body) {
-          const detail = await res.json().catch(() => ({ error: res.statusText }));
-          throw new Error(detail.error || `TTS failed (${res.status})`);
-        }
-
         const audio = getAudio();
         if (canStream()) {
-          await playStreaming(audio, res.body, controller.signal, () => {
-            setLoading(false);
-            setSpeaking(true);
-          });
+          await playStreaming(audio, stream, controller.signal, started);
         } else {
-          const blob = await res.blob();
-          if (controller.signal.aborted) return;
+          const blob = await new Response(stream).blob();
+          if (controller.signal.aborted || blob.size === 0) return;
           releaseUrl();
           const url = URL.createObjectURL(blob);
           objectUrlRef.current = url;
           audio.src = url;
-          setLoading(false);
-          setSpeaking(true);
+          started();
           await playToEnd(audio, controller.signal);
         }
       } catch (err) {
@@ -128,7 +127,30 @@ export function useVoicePlayback(): VoicePlayback {
     [getAudio, releaseUrl, stop],
   );
 
-  return { speaking, loading, error, speak, stop };
+  /** HTTP fallback: fetch the line's audio from /api/tts, then play it. */
+  const speak = useCallback(
+    async (text: string, previousText?: string) => {
+      stop();
+      setError(null);
+      const stops = stopCountRef.current;
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, previousText }),
+      }).catch(() => null);
+
+      if (stopCountRef.current !== stops) return; // interrupted while fetching
+      if (!res?.ok || !res.body) {
+        const detail = await res?.json().catch(() => null);
+        setError(detail?.error || `TTS failed (${res?.status ?? "network"})`);
+        return;
+      }
+      await play(res.body);
+    },
+    [play, stop],
+  );
+
+  return { speaking, loading, error, speak, play, stop };
 }
 
 /** Feeds mp3 chunks into a MediaSource and plays as soon as the first lands. */
@@ -146,6 +168,7 @@ async function playStreaming(
     await once(mediaSource, "sourceopen", signal);
     const sourceBuffer = mediaSource.addSourceBuffer(MIME);
     const reader = body.getReader();
+    signal.addEventListener("abort", () => void reader.cancel().catch(() => {}), { once: true });
 
     let started = false;
     let streamEnded = false;

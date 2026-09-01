@@ -1,0 +1,95 @@
+{
+  "label": "ws-claude-sonnet-5-5",
+  "summary": {
+    "time_to_first_audio_ms": {
+      "median": 1502,
+      "p95": 1832
+    },
+    "server_prepare_ms": {
+      "median": 230,
+      "p95": 534
+    }
+  },
+  "turns": [
+    {
+      "time_to_first_audio_ms": 1731,
+      "server_prepare_ms": 534
+    },
+    {
+      "time_to_first_audio_ms": 1734,
+      "server_prepare_ms": 616
+    },
+    {
+      "time_to_first_audio_ms": 1375,
+      "server_prepare_ms": 217
+    },
+    {
+      "time_to_first_audio_ms": 1334,
+      "server_prepare_ms": 230
+    },
+    {
+      "time_to_first_audio_ms": 1143,
+      "server_prepare_ms": 205
+    },
+    {
+      "time_to_first_audio_ms": 1485,
+      "server_prepare_ms": 305
+    },
+    {
+      "time_to_first_audio_ms": 1912,
+      "server_prepare_ms": 209
+    },
+    {
+      "time_to_first_audio_ms": 1283,
+      "server_prepare_ms": 270
+    },
+    {
+      "time_to_first_audio_ms": 1568,
+      "server_prepare_ms": 279
+    },
+    {
+      "time_to_first_audio_ms": 1357,
+      "server_prepare_ms": 311
+    },
+    {
+      "time_to_first_audio_ms": 1667,
+      "server_prepare_ms": 227
+    },
+    {
+      "time_to_first_audio_ms": 1236,
+      "server_prepare_ms": 231
+    },
+    {
+      "time_to_first_audio_ms": 1520,
+      "server_prepare_ms": 289
+    },
+    {
+      "time_to_first_audio_ms": 1832,
+      "server_prepare_ms": 221
+    },
+    {
+      "time_to_first_audio_ms": 1587,
+      "server_prepare_ms": 295
+    },
+    {
+      "time_to_first_audio_ms": 1412,
+      "server_prepare_ms": 229
+    },
+    {
+      "time_to_first_audio_ms": 1699,
+      "server_prepare_ms": 215
+    },
+    {
+      "time_to_first_audio_ms": 1399,
+      "server_prepare_ms": 212
+    },
+    {
+      "time_to_first_audio_ms": 1532,
+      "server_prepare_ms": 305
+    },
+    {
+      "time_to_first_audio_ms": 1260,
+      "server_prepare_ms": 207
+    }
+  ]
+}

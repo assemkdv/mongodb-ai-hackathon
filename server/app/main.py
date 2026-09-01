@@ -13,7 +13,7 @@ from starlette.exceptions import HTTPException
 
 from app import db
 from app.embeddings import embed
-from app.routes import counterparts, search, sessions, tts, turn
+from app.routes import counterparts, search, sessions, tts, turn, voice_socket
 
 
 async def warm_up_embeddings():
@@ -40,6 +40,7 @@ app.include_router(search.router)
 app.include_router(sessions.router)
 app.include_router(turn.router)
 app.include_router(tts.router)
+app.include_router(voice_socket.router)
 
 
 @app.get("/health")

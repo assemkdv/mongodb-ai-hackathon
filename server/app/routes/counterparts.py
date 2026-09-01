@@ -10,6 +10,7 @@ traits        one document per behaviour, e.g. "Becomes quiet when annoyed".
 evidence      why a trait exists or changed (e.g. the director's spoken note)
 """
 
+import asyncio
 import logging
 import re
 from datetime import datetime, timezone
@@ -145,15 +146,15 @@ async def get_context(counterpart_id: str):
     traits, and the evidence behind those traits."""
     db = get_db()
 
-    counterpart = await db.counterparts.find_one({"_id": counterpart_id})
+    # Both reads at once: each one is a network round trip to Atlas.
+    counterpart, active_traits = await asyncio.gather(
+        db.counterparts.find_one({"_id": counterpart_id}),
+        db.traits.find({"counterpartId": counterpart_id, "status": "active"})
+        .sort("category", 1)
+        .to_list(),
+    )
     if not counterpart:
         raise HTTPException(404, "Counterpart not found")
-
-    active_traits = (
-        await db.traits.find({"counterpartId": counterpart_id, "status": "active"})
-        .sort("category", 1)
-        .to_list()
-    )
 
     evidence_ids = [eid for trait in active_traits for eid in trait.get("evidenceIds", [])]
     # Leave out the 1024-number embeddings: the frontend never needs them.
