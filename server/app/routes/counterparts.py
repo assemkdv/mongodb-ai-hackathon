@@ -10,15 +10,18 @@ traits        one document per behaviour, e.g. "Becomes quiet when annoyed".
 evidence      why a trait exists or changed (e.g. the director's spoken note)
 """
 
+import logging
 import re
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
 from app.db import get_client, get_db, new_id
+from app.embeddings import embed
 from app.schemas import Correction, NewCounterpart
 
 router = APIRouter(prefix="/api/counterparts")
+log = logging.getLogger("uvicorn.error")
 
 
 @router.get("")
@@ -127,7 +130,8 @@ async def get_context(counterpart_id: str):
     )
 
     evidence_ids = [eid for trait in active_traits for eid in trait.get("evidenceIds", [])]
-    evidence = await db.evidence.find({"_id": {"$in": evidence_ids}}).to_list()
+    # Leave out the 1024-number embeddings: the frontend never needs them.
+    evidence = await db.evidence.find({"_id": {"$in": evidence_ids}}, {"embedding": 0}).to_list()
 
     return {"counterpart": counterpart, "activeTraits": active_traits, "evidence": evidence}
 
@@ -186,6 +190,15 @@ async def apply_correction(counterpart_id: str, body: Correction):
         "updatedAt": now,
     }
     superseded = {"status": "superseded", "supersededBy": new_trait_id, "updatedAt": now}
+
+    # Embed the note so vector search can find it later. This is a network
+    # call, so it happens *before* the transaction (keeping the transaction
+    # short), and it's best-effort: if Voyage is down, the correction is still
+    # saved, just not searchable until the backfill script runs.
+    try:
+        [evidence["embedding"]] = await embed([body.correction], "document")
+    except Exception as error:
+        log.warning("Could not embed correction %s: %s", evidence_id, error)
 
     async def write(session):
         await db.evidence.insert_one(evidence, session=session)

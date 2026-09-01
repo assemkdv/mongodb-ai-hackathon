@@ -41,6 +41,11 @@ class NewCounterpart(BaseModel):
     traits: dict[str, Text | TraitInput] = Field(min_length=1)
 
 
+class SearchQuery(BaseModel):
+    text: Text  # what the user just said
+    limit: int = Field(default=3, ge=1, le=10)
+
+
 class NewSession(BaseModel):
     counterpartId: Text
 

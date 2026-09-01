@@ -12,12 +12,23 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException
 
 from app import db
-from app.routes import counterparts, sessions
+from app.embeddings import embed
+from app.routes import counterparts, search, sessions
+
+
+async def warm_up_embeddings():
+    """Open the connection to Voyage at startup, so the first real search
+    doesn't pay ~200ms of connection setup. Best-effort."""
+    try:
+        await embed(["warm up"], "query")
+    except Exception:
+        pass
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.connect()  # runs once when the server starts
+    await warm_up_embeddings()
     yield
     await db.disconnect()  # runs once when it stops
 
@@ -25,6 +36,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Rehearsal Room API", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(counterparts.router)
+app.include_router(search.router)
 app.include_router(sessions.router)
 
 

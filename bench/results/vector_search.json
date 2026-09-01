@@ -1,0 +1,268 @@
+{
+  "summary": {
+    "embedMs": {
+      "median": 76,
+      "p95": 121
+    },
+    "searchMs": {
+      "median": 73,
+      "p95": 157
+    },
+    "totalMs": {
+      "median": 152,
+      "p95": 238
+    }
+  },
+  "queries": [
+    {
+      "embedMs": 143,
+      "searchMs": 121,
+      "totalMs": 264
+    },
+    {
+      "embedMs": 76,
+      "searchMs": 73,
+      "totalMs": 149
+    },
+    {
+      "embedMs": 97,
+      "searchMs": 141,
+      "totalMs": 238
+    },
+    {
+      "embedMs": 76,
+      "searchMs": 71,
+      "totalMs": 147
+    },
+    {
+      "embedMs": 76,
+      "searchMs": 157,
+      "totalMs": 233
+    },
+    {
+      "embedMs": 71,
+      "searchMs": 70,
+      "totalMs": 141
+    },
+    {
+      "embedMs": 69,
+      "searchMs": 71,
+      "totalMs": 140
+    },
+    {
+      "embedMs": 67,
+      "searchMs": 78,
+      "totalMs": 146
+    },
+    {
+      "embedMs": 76,
+      "searchMs": 71,
+      "totalMs": 146
+    },
+    {
+      "embedMs": 72,
+      "searchMs": 71,
+      "totalMs": 143
+    },
+    {
+      "embedMs": 68,
+      "searchMs": 72,
+      "totalMs": 140
+    },
+    {
+      "embedMs": 110,
+      "searchMs": 74,
+      "totalMs": 184
+    },
+    {
+      "embedMs": 76,
+      "searchMs": 72,
+      "totalMs": 147
+    },
+    {
+      "embedMs": 163,
+      "searchMs": 72,
+      "totalMs": 235
+    },
+    {
+      "embedMs": 112,
+      "searchMs": 74,
+      "totalMs": 185
+    },
+    {
+      "embedMs": 121,
+      "searchMs": 82,
+      "totalMs": 203
+    },
+    {
+      "embedMs": 67,
+      "searchMs": 71,
+      "totalMs": 138
+    },
+    {
+      "embedMs": 66,
+      "searchMs": 105,
+      "totalMs": 170
+    },
+    {
+      "embedMs": 78,
+      "searchMs": 73,
+      "totalMs": 150
+    },
+    {
+      "embedMs": 78,
+      "searchMs": 165,
+      "totalMs": 242
+    },
+    {
+      "embedMs": 66,
+      "searchMs": 70,
+      "totalMs": 136
+    },
+    {
+      "embedMs": 72,
+      "searchMs": 74,
+      "totalMs": 145
+    },
+    {
+      "embedMs": 71,
+      "searchMs": 72,
+      "totalMs": 142
+    },
+    {
+      "embedMs": 76,
+      "searchMs": 73,
+      "totalMs": 149
+    },
+    {
+      "embedMs": 101,
+      "searchMs": 71,
+      "totalMs": 173
+    },
+    {
+      "embedMs": 71,
+      "searchMs": 71,
+      "totalMs": 142
+    },
+    {
+      "embedMs": 74,
+      "searchMs": 100,
+      "totalMs": 174
+    },
+    {
+      "embedMs": 105,
+      "searchMs": 71,
+      "totalMs": 175
+    },
+    {
+      "embedMs": 73,
+      "searchMs": 139,
+      "totalMs": 212
+    },
+    {
+      "embedMs": 81,
+      "searchMs": 83,
+      "totalMs": 164
+    },
+    {
+      "embedMs": 67,
+      "searchMs": 147,
+      "totalMs": 213
+    },
+    {
+      "embedMs": 88,
+      "searchMs": 71,
+      "totalMs": 158
+    },
+    {
+      "embedMs": 72,
+      "searchMs": 154,
+      "totalMs": 225
+    },
+    {
+      "embedMs": 70,
+      "searchMs": 74,
+      "totalMs": 144
+    },
+    {
+      "embedMs": 74,
+      "searchMs": 163,
+      "totalMs": 236
+    },
+    {
+      "embedMs": 77,
+      "searchMs": 71,
+      "totalMs": 148
+    },
+    {
+      "embedMs": 82,
+      "searchMs": 156,
+      "totalMs": 237
+    },
+    {
+      "embedMs": 81,
+      "searchMs": 72,
+      "totalMs": 152
+    },
+    {
+      "embedMs": 84,
+      "searchMs": 142,
+      "totalMs": 226
+    },
+    {
+      "embedMs": 75,
+      "searchMs": 73,
+      "totalMs": 148
+    },
+    {
+      "embedMs": 84,
+      "searchMs": 154,
+      "totalMs": 238
+    },
+    {
+      "embedMs": 76,
+      "searchMs": 70,
+      "totalMs": 146
+    },
+    {
+      "embedMs": 67,
+      "searchMs": 70,
+      "totalMs": 137
+    },
+    {
+      "embedMs": 85,
+      "searchMs": 70,
+      "totalMs": 154
+    },
+    {
+      "embedMs": 71,
+      "searchMs": 75,
+      "totalMs": 146
+    },
+    {
+      "embedMs": 73,
+      "searchMs": 80,
+      "totalMs": 152
+    },
+    {
+      "embedMs": 102,
+      "searchMs": 71,
+      "totalMs": 172
+    },
+    {
+      "embedMs": 78,
+      "searchMs": 70,
+      "totalMs": 148
+    },
+    {
+      "embedMs": 65,
+      "searchMs": 73,
+      "totalMs": 138
+    },
+    {
+      "embedMs": 109,
+      "searchMs": 70,
+      "totalMs": 179
+    }
+  ]
+}

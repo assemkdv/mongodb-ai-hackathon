@@ -157,6 +157,24 @@ export function logTurn(
   });
 }
 
+export interface RelevantNote {
+  _id: string;
+  content: string;
+  score: number;
+}
+
+/** Atlas Vector Search: the past notes closest in meaning to `text`. */
+export async function searchNotes(
+  counterpartId: string,
+  text: string,
+): Promise<RelevantNote[]> {
+  const { results } = await call<{ results: RelevantNote[] }>(
+    `/api/counterparts/${counterpartId}/search`,
+    { method: "POST", body: JSON.stringify({ text, limit: 3 }) },
+  );
+  return results;
+}
+
 /**
  * Supersedes the active trait in `category` with the corrected claim.
  * The backend runs this as a transaction: evidence insert, old trait marked

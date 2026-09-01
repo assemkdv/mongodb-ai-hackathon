@@ -1,5 +1,8 @@
-"""Tests run against a real MongoDB (transactions can't be faked well), using a
-separate "counterpart_test" database that is dropped afterwards."""
+"""Tests run against a real MongoDB (transactions and vector search can't be
+faked well), using a separate "counterpart_test" database.
+
+After the tests, the documents are deleted but the database is kept, so the
+vector index (which takes ~30s to build) survives between runs."""
 
 import os
 
@@ -7,6 +10,8 @@ import pytest
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from pymongo import MongoClient
+
+from scripts.create_vector_index import ensure_vector_index
 
 load_dotenv()
 TEST_DB = "counterpart_test"
@@ -19,12 +24,16 @@ def client():
     if not uri.startswith("mongodb") or "<" in uri:
         pytest.skip("Set a real MONGODB_URI in server/.env to run the tests")
 
+    db = MongoClient(uri)[TEST_DB]
+    ensure_vector_index(db)
+
     from app.main import app
 
     with TestClient(app) as test_client:  # "with" runs the startup/shutdown hooks
         yield test_client
 
-    MongoClient(uri).drop_database(TEST_DB)
+    for name in ["counterparts", "traits", "evidence", "sessions", "debriefs"]:
+        db[name].delete_many({})
 
 
 @pytest.fixture

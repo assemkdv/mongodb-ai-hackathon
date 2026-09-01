@@ -223,6 +223,7 @@ Stability, style, and speed are clamped to tested ranges to prevent robotic or s
 | Speech output | ElevenLabs Turbo v2.5            | Low-latency streaming voice synthesis                                 |
 | API           | Python, FastAPI, PyMongo (async) | Counterparts, sessions, corrections, evidence, and debriefs           |
 | Memory        | MongoDB Atlas                    | Versioned traits, supporting evidence, transcripts, and session state |
+| Retrieval     | Atlas Vector Search, Voyage AI   | Finds the past director notes most relevant to each line              |
 | Deployment    | Vercel, Render                   | Next.js frontend on Vercel, FastAPI backend on Render                 |
 
 ## Repository structure
@@ -294,6 +295,8 @@ Seed the built-in counterparts:
 
 ```bash
 uv run python seed.py
+uv run python -m scripts.backfill_embeddings
+uv run python -m scripts.create_vector_index
 ```
 
 Start the backend:
@@ -407,6 +410,7 @@ The FastAPI backend stores the profile and all five initial traits inside a Mong
 | `POST` | `/api/counterparts`                 | Create a counterpart and initial traits         |
 | `GET`  | `/api/counterparts/:id/context`     | Fetch a profile, active traits, and evidence    |
 | `POST` | `/api/counterparts/:id/corrections` | Supersede a trait and store correction evidence |
+| `POST` | `/api/counterparts/:id/search`      | Atlas Vector Search over past notes (top 3)     |
 | `POST` | `/api/sessions`                     | Start a rehearsal session                       |
 | `POST` | `/api/sessions/:sessionId/turns`    | Append a user or counterpart turn               |
 | `POST` | `/api/sessions/:sessionId/debrief`  | Store observations and complete a session       |

@@ -4,7 +4,10 @@
 
 ```bash
 cd server
-cp .env.example .env          # then put your Atlas connection string in it
+cp .env.example .env          # then fill in MONGODB_URI and VOYAGE_API_KEY
+uv run python seed.py                         # 3 built-in counterparts
+uv run python -m scripts.backfill_embeddings  # embed their notes
+uv run python -m scripts.create_vector_index  # Atlas Vector Search index (once)
 uv run uvicorn app.main:app --reload --port 3001
 ```
 
@@ -35,6 +38,10 @@ MONGODB_URI="mongodb://localhost:27018/?directConnection=true" uv run pytest -q
 | `app/schemas.py` | Pydantic models: the allowed shape of every request body |
 | `app/routes/counterparts.py` | People, their versioned traits, and the correction transaction |
 | `app/routes/sessions.py` | Rehearsal sessions, transcript turns, debriefs |
+| `app/routes/search.py` | Atlas Vector Search: top 3 past notes relevant to a line, with timing |
+| `app/embeddings.py` | Voyage AI: text in, 1024-number embedding out |
+| `scripts/create_vector_index.py` | Creates the `evidence_vector_index` in Atlas |
+| `scripts/backfill_embeddings.py` | Embeds notes saved before vector search existed |
 | `tests/test_api.py` | One test per behaviour, run against a real MongoDB |
 
 ## Endpoints
@@ -45,7 +52,8 @@ MONGODB_URI="mongodb://localhost:27018/?directConnection=true" uv run pytest -q
 | GET | `/api/counterparts` | List people, with active-trait counts |
 | POST | `/api/counterparts` | Create a person + version-1 traits (transaction) |
 | GET | `/api/counterparts/{id}/context` | Person + active traits + evidence, for building the prompt |
-| POST | `/api/counterparts/{id}/corrections` | Director note: supersede a trait (3-write transaction) |
+| POST | `/api/counterparts/{id}/corrections` | Director note: embed it, then supersede a trait (3-write transaction) |
+| POST | `/api/counterparts/{id}/search` | Vector search: the 3 past notes closest in meaning to `text` |
 | POST | `/api/sessions` | Start a rehearsal |
 | POST | `/api/sessions/{id}/turns` | Append a line to the transcript |
 | POST | `/api/sessions/{id}/debrief` | Save the debrief and close the session |

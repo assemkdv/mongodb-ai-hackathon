@@ -6,6 +6,8 @@ import {
   createSession,
   getContext,
   logTurn,
+  type RelevantNote,
+  searchNotes,
   submitCorrection,
   toCounterpartId,
 } from "@/lib/backend";
@@ -63,6 +65,17 @@ export async function POST(request: NextRequest) {
   let backendSessionId: string | null = null;
   let degraded: string | undefined;
 
+  // Vector search runs in parallel with the context fetch, so it adds no
+  // waiting time of its own. Best-effort: on failure the turn continues
+  // without past notes.
+  const notesPromise: Promise<RelevantNote[]> =
+    body.kind === "line"
+      ? searchNotes(counterpartId, text).catch((err) => {
+          console.warn("[chat] vector search failed:", err);
+          return [];
+        })
+      : Promise.resolve([]);
+
   try {
     context = await getContext(counterpartId);
     backendSessionId = await ensureSession(body.sessionId, counterpartId);
@@ -117,6 +130,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const relevantNotes = await notesPromise;
+
   try {
     const message = await client.messages.create({
       model: MODEL,
@@ -125,7 +140,9 @@ export async function POST(request: NextRequest) {
       // person. Short in-character lines don't need the reasoning budget.
       thinking: { type: "disabled" },
       output_config: { effort: EFFORT },
-      system: context ? buildSystem(context) : getPersona(body.personaId).systemPrompt,
+      system: context
+        ? buildSystem(context, relevantNotes)
+        : getPersona(body.personaId).systemPrompt,
       messages: toMessages(body),
     });
 
@@ -275,8 +292,13 @@ async function classifyNote(
 }
 
 /** Rebuilds the character sheet from what MongoDB currently believes. */
-function buildSystem(ctx: CounterpartContext): string {
+function buildSystem(ctx: CounterpartContext, notes: RelevantNote[] = []): string {
   const { counterpart: c, activeTraits } = ctx;
+  const memory = notes.length
+    ? `\nRELEVANT PAST NOTES (what you have been told about how you behave in moments like this)\n${notes
+        .map((n) => `- ${n.content}`)
+        .join("\n")}\n`
+    : "";
 
   const claimsFor = (...categories: string[]) =>
     activeTraits
@@ -324,7 +346,7 @@ If pushed: ${c.escalation}
 REACTIONS
 Hardens: ${hardens || "- (none recorded)"}
 Softens: ${softens || "- (none recorded)"}
-
+${memory}
 SPEECH
 Under ${c.speechRules.maximumWords} words.${
     c.speechRules.fragmentsWhenTense ? " Fragments when tense." : ""
