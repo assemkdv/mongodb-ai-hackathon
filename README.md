@@ -74,7 +74,7 @@ flowchart TD
     CHAT --> LOG["Persist transcript asynchronously"]
 ```
 
-The Next.js application acts as the orchestration layer. The browser communicates only with same-origin Next.js routes. Those routes call the Express service, Claude, and ElevenLabs without exposing API keys or the MongoDB connection string to the client.
+The Next.js application acts as the orchestration layer. The browser communicates only with same-origin Next.js routes. Those routes call the FastAPI service, Claude, and ElevenLabs without exposing API keys or the MongoDB connection string to the client.
 
 ## The Director Interrupt
 
@@ -87,7 +87,7 @@ sequenceDiagram
     participant User
     participant UI as Rehearsal UI
     participant Claude
-    participant API as Express API
+    participant API as FastAPI
     participant DB as MongoDB Atlas
 
     User->>UI: Hold D and speak a correction
@@ -221,9 +221,9 @@ Stability, style, and speed are clamped to tested ranges to prevent robotic or s
 | Speech input  | Web Speech API                   | Live and final browser transcription                                  |
 | Reasoning     | Anthropic Claude                 | Persona generation, note classification, and in-character replies     |
 | Speech output | ElevenLabs Turbo v2.5            | Low-latency streaming voice synthesis                                 |
-| API           | Express 5, Node.js               | Counterparts, sessions, corrections, evidence, and debriefs           |
+| API           | Python, FastAPI, PyMongo (async) | Counterparts, sessions, corrections, evidence, and debriefs           |
 | Memory        | MongoDB Atlas                    | Versioned traits, supporting evidence, transcripts, and session state |
-| Deployment    | Vercel                           | Next.js frontend and serverless Express backend                       |
+| Deployment    | Vercel, Render                   | Next.js frontend on Vercel, FastAPI backend on Render                 |
 
 ## Repository structure
 
@@ -239,16 +239,18 @@ Stability, style, and speed are clamped to tested ranges to prevent robotic or s
 │   │   └── page.tsx              # Rehearsal Room entry point
 │   ├── components/rehearsal/      # Stage, mic, transcript, picker, and traits
 │   └── lib/
-│       ├── backend.ts             # Typed client for the Express service
+│       ├── backend.ts             # Typed client for the FastAPI service
 │       ├── personas/              # Static fallback persona
 │       └── voice/                 # Recognition, playback, delivery, and state
-├── backend/
-│   ├── api/index.js               # Vercel serverless entry point
-│   ├── lib/db.js                  # Atlas connection and database indexes
-│   ├── app.js                     # Express routes and transactions
-│   ├── index.js                   # Local server entry point
-│   └── seed.js                    # Seed data for three scenarios
-└── voice-agent/                   # Voice-agent implementation notes
+└── server/                        # Python + FastAPI backend
+    ├── app/
+    │   ├── main.py                # App setup, startup, error format
+    │   ├── db.py                  # Atlas connection and indexes
+    │   ├── schemas.py             # Pydantic request models
+    │   └── routes/                # counterparts.py, sessions.py
+    ├── tests/                     # pytest suite
+    ├── seed.py                    # Seed the three built-in scenarios
+    └── seed_data.json
 ```
 
 ## Getting started
@@ -257,8 +259,8 @@ Stability, style, and speed are clamped to tested ranges to prevent robotic or s
 
 You will need:
 
-* Node.js 20 or newer
-* npm
+* Python 3.12+ and [uv](https://docs.astral.sh/uv/)
+* Node.js 20 or newer and npm
 * A MongoDB Atlas deployment
 * An Anthropic API key
 * An ElevenLabs API key with Text to Speech access
@@ -270,35 +272,34 @@ You will need:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/kuatovakamila/digital-twin-hackathon-mongodb.git
-cd digital-twin-hackathon-mongodb
+git clone https://github.com/assemkdv/mongodb-ai-hackathon.git
+cd mongodb-ai-hackathon
 ```
 
 ### 2. Configure the backend
 
 ```bash
-cd backend
+cd server
 cp .env.example .env
-npm install
 ```
 
-Set the following values in `backend/.env`:
+Set the following values in `server/.env`:
 
 ```dotenv
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/
-PORT=3001
+MONGODB_DB=counterpart
 ```
 
 Seed the built-in counterparts:
 
 ```bash
-npm run seed
+uv run python seed.py
 ```
 
 Start the backend:
 
 ```bash
-npm run dev
+uv run uvicorn app.main:app --reload --port 3001
 ```
 
 The seed is safe to run repeatedly. It resets only the three built-in counterparts and recreates their original traits and evidence.
@@ -360,9 +361,9 @@ Headphones are recommended to prevent the generated speech from bleeding back in
 | `frontend` | `npm run build`     | Create a production build                         |
 | `frontend` | `npm run start`     | Run the production build                          |
 | `frontend` | `npm run typecheck` | Type-check without emitting files                 |
-| `backend`  | `npm run dev`       | Start Express with Node watch mode                |
-| `backend`  | `npm start`         | Start the Express server                          |
-| `backend`  | `npm run seed`      | Reset and seed the built-in counterparts          |
+| `server`   | `uv run uvicorn app.main:app --reload --port 3001` | Start FastAPI with auto-reload |
+| `server`   | `uv run python seed.py` | Reset and seed the built-in counterparts      |
+| `server`   | `uv run pytest -q`  | Run the backend tests                             |
 
 ## Using the app
 
@@ -393,7 +394,7 @@ Select **+ Add someone** and describe:
 
 Claude returns schema-constrained JSON containing the complete counterpart model.
 
-The Express backend stores the profile and all five initial traits inside a MongoDB transaction. The new person then appears in the picker and can be corrected in the same way as the built-in counterparts.
+The FastAPI backend stores the profile and all five initial traits inside a MongoDB transaction. The new person then appears in the picker and can be corrected in the same way as the built-in counterparts.
 
 ## API reference
 
@@ -491,12 +492,10 @@ Transactions protect the two operations where partial state would be harmful:
 
 The repository contains two deployable applications:
 
-1. Deploy `backend/` as a Node or Vercel project and configure `MONGODB_URI`.
+1. Deploy `server/` as a Python web service (for example on Render) with the start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, and configure `MONGODB_URI`.
 2. Deploy `frontend/` as a Next.js project.
 3. Set `BACKEND_URL` in the frontend deployment to the deployed backend URL.
 4. Add the Anthropic and ElevenLabs credentials to the frontend’s server-side environment variables.
-
-`backend/vercel.json` rewrites backend traffic to the serverless Express entry point at `backend/api/index.js`.
 
 Keep every credential server-side. None of the environment variables in this README should use the `NEXT_PUBLIC_` prefix.
 

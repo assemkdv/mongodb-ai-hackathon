@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 /**
  * The trait model, read straight from Mongo on every request.
  *
- * The browser cannot reach the Express backend (see lib/backend.ts), so this
+ * The browser cannot reach the FastAPI backend (see lib/backend.ts), so this
  * is the seam the panel polls. It stays a plain read — a director correction
  * is written by /api/chat, and this route only ever reports the result.
  */

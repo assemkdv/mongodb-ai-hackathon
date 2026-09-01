@@ -1,0 +1,119 @@
+{
+  "label": "before",
+  "summary": {
+    "claude_ms": {
+      "median": 2324,
+      "p95": 3138
+    },
+    "tts_first_byte_ms": {
+      "median": 224,
+      "p95": 285
+    },
+    "time_to_first_audio_ms": {
+      "median": 2611,
+      "p95": 3389
+    }
+  },
+  "turns": [
+    {
+      "claude_ms": 2231,
+      "tts_first_byte_ms": 285,
+      "time_to_first_audio_ms": 2517
+    },
+    {
+      "claude_ms": 1947,
+      "tts_first_byte_ms": 128,
+      "time_to_first_audio_ms": 2076
+    },
+    {
+      "claude_ms": 1751,
+      "tts_first_byte_ms": 175,
+      "time_to_first_audio_ms": 1926
+    },
+    {
+      "claude_ms": 1689,
+      "tts_first_byte_ms": 144,
+      "time_to_first_audio_ms": 1833
+    },
+    {
+      "claude_ms": 1956,
+      "tts_first_byte_ms": 156,
+      "time_to_first_audio_ms": 2111
+    },
+    {
+      "claude_ms": 2585,
+      "tts_first_byte_ms": 225,
+      "time_to_first_audio_ms": 2810
+    },
+    {
+      "claude_ms": 1721,
+      "tts_first_byte_ms": 229,
+      "time_to_first_audio_ms": 1951
+    },
+    {
+      "claude_ms": 2144,
+      "tts_first_byte_ms": 181,
+      "time_to_first_audio_ms": 2326
+    },
+    {
+      "claude_ms": 2432,
+      "tts_first_byte_ms": 239,
+      "time_to_first_audio_ms": 2671
+    },
+    {
+      "claude_ms": 2619,
+      "tts_first_byte_ms": 175,
+      "time_to_first_audio_ms": 2794
+    },
+    {
+      "claude_ms": 2383,
+      "tts_first_byte_ms": 252,
+      "time_to_first_audio_ms": 2635
+    },
+    {
+      "claude_ms": 2615,
+      "tts_first_byte_ms": 183,
+      "time_to_first_audio_ms": 2797
+    },
+    {
+      "claude_ms": 2187,
+      "tts_first_byte_ms": 281,
+      "time_to_first_audio_ms": 2468
+    },
+    {
+      "claude_ms": 2985,
+      "tts_first_byte_ms": 216,
+      "time_to_first_audio_ms": 3202
+    },
+    {
+      "claude_ms": 2329,
+      "tts_first_byte_ms": 310,
+      "time_to_first_audio_ms": 2640
+    },
+    {
+      "claude_ms": 2095,
+      "tts_first_byte_ms": 205,
+      "time_to_first_audio_ms": 2300
+    },
+    {
+      "claude_ms": 3138,
+      "tts_first_byte_ms": 252,
+      "time_to_first_audio_ms": 3389
+    },
+    {
+      "claude_ms": 3186,
+      "tts_first_byte_ms": 223,
+      "time_to_first_audio_ms": 3409
+    },
+    {
+      "claude_ms": 2318,
+      "tts_first_byte_ms": 269,
+      "time_to_first_audio_ms": 2587
+    },
+    {
+      "claude_ms": 2449,
+      "tts_first_byte_ms": 244,
+      "time_to_first_audio_ms": 2693
+    }
+  ]
+}

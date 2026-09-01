@@ -1,5 +1,5 @@
 /**
- * Client for the Express + MongoDB backend (backend/index.js).
+ * Client for the FastAPI + MongoDB backend (server/app/main.py).
  *
  * Only the Next.js route layer talks to this — never the browser. That keeps
  * one origin for the app and leaves the backend free to stay on localhost.

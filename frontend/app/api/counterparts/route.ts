@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * Who you can rehearse against. Proxied rather than called from the browser so
- * the Express backend can stay on localhost and the app keeps one origin.
+ * the FastAPI backend can stay on localhost and the app keeps one origin.
  */
 export async function GET() {
   try {
