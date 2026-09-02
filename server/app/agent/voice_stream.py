@@ -15,6 +15,7 @@ import base64
 import json
 import os
 import re
+import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 
 from websockets.asyncio.client import connect
@@ -24,6 +25,8 @@ from app.agent.delivery import TAG, parse_delivery, voice_settings
 # Text goes to ElevenLabs one phrase at a time (up to the last punctuation
 # mark), so it starts speaking right away instead of waiting for a buffer.
 PHRASE_END = re.compile(r"[.!?,;:—…]")
+# The first audio goes out after this many words, even without punctuation.
+FIRST_WORDS = 3
 # A second delivery tag means Claude started another line: stop there.
 SECOND_TAG = re.compile(r"\n\s*\[[a-z]+\s*\|", re.IGNORECASE)
 
@@ -41,11 +44,17 @@ async def speak_streaming(
     words: AsyncIterator[str],
     send_audio: Callable[[bytes], Awaitable[None]],
     on_reply: Callable[[str], Awaitable[None]],
+    marks: dict | None = None,
 ) -> str:
     """words: Claude's reply, piece by piece.
     send_audio: called with each MP3 chunk as ElevenLabs produces it.
     on_reply: called with the full reply text as soon as Claude finishes.
+    marks: optional dict that gets a timestamp for each stage, for timing.
     Returns the full reply (delivery tag included)."""
+    marks = marks if marks is not None else {}
+
+    def mark(name: str):
+        marks.setdefault(name, time.perf_counter())
 
     # Open the ElevenLabs connection now, while Claude is still thinking,
     # so the ~150ms handshake is already done when the first words arrive.
@@ -60,6 +69,7 @@ async def speak_streaming(
         started = False  # voice settings sent yet?
 
         async for piece in words:
+            mark("claudeFirstToken")
             reply += piece
 
             if not started:
@@ -68,6 +78,7 @@ async def speak_streaming(
                 match = TAG.match(reply)
                 if not match and (len(reply) < 40 or reply.lstrip().startswith("[")):
                     continue
+                mark("deliveryTag")
                 delivery, _ = parse_delivery(reply)
                 await elevenlabs.send(json.dumps({"text": " ", "voice_settings": voice_settings(delivery)}))
                 sent_upto = match.end() if match else 0
@@ -79,10 +90,15 @@ async def speak_streaming(
 
             pending = reply[sent_upto:]
             ends = [m.end() for m in PHRASE_END.finditer(pending)]
+            if "firstPhraseSent" not in marks and not ends and len(pending.split()) > FIRST_WORDS:
+                # Don't make the first audio wait for a comma: send the
+                # first few complete words right away.
+                ends = [pending.rstrip().rfind(" ") + 1]
             if ends and pending[: ends[-1]].strip():
                 # Everything up to the last punctuation mark is a complete
                 # phrase. "flush" tells ElevenLabs to voice it right now.
                 phrase = pending[: ends[-1]]
+                mark("firstPhraseSent")
                 await elevenlabs.send(json.dumps({"text": _speakable(phrase), "flush": True}))
                 sent_upto += len(phrase)
 
@@ -94,6 +110,7 @@ async def speak_streaming(
         await on_reply(reply.strip())
 
         if reply[sent_upto:].strip():
+            mark("firstPhraseSent")
             await elevenlabs.send(json.dumps({"text": _speakable(reply[sent_upto:]), "flush": True}))
         await elevenlabs.send(json.dumps({"text": ""}))  # end of input
 

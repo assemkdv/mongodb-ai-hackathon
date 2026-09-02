@@ -74,11 +74,18 @@ async def run_turn(ws: WebSocket, message: dict) -> None:
         async def send_reply(text: str):
             await ws.send_json({"type": "reply", "reply": first_reply(text), **prepared.result})
 
+        marks = {}
         reply = await speak_streaming(
-            claude.stream_reply(prepared.system, prepared.messages), send_audio, send_reply
+            claude.stream_reply(prepared.system, prepared.messages), send_audio, send_reply, marks
         )
 
-        timing = {"prepareMs": prepared_ms, "firstAudioMs": first_audio_ms, "totalMs": ms()}
+        # Where the time went, each stage measured from the moment the line arrived.
+        timing = {
+            "prepareMs": prepared_ms,  # database + vector search
+            **{f"{name}Ms": round((t - started) * 1000) for name, t in marks.items()},
+            "firstAudioMs": first_audio_ms,
+            "totalMs": ms(),
+        }
         log.info("voice turn %s: %s", body.personaId, timing)
         await ws.send_json({"type": "done", "timing": timing})
 

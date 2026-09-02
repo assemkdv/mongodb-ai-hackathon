@@ -1,0 +1,119 @@
+{
+  "label": "deployed-render-haiku",
+  "summary": {
+    "time_to_first_audio_ms": {
+      "median": 1388,
+      "p95": 1534
+    },
+    "server_first_audio_ms": {
+      "median": 1266,
+      "p95": 1438
+    },
+    "server_prepare_ms": {
+      "median": 111,
+      "p95": 127
+    }
+  },
+  "turns": [
+    {
+      "time_to_first_audio_ms": 1633,
+      "server_first_audio_ms": 1561,
+      "server_prepare_ms": 158
+    },
+    {
+      "time_to_first_audio_ms": 1478,
+      "server_first_audio_ms": 1407,
+      "server_prepare_ms": 115
+    },
+    {
+      "time_to_first_audio_ms": 1442,
+      "server_first_audio_ms": 1350,
+      "server_prepare_ms": 109
+    },
+    {
+      "time_to_first_audio_ms": 1289,
+      "server_first_audio_ms": 1214,
+      "server_prepare_ms": 104
+    },
+    {
+      "time_to_first_audio_ms": 1390,
+      "server_first_audio_ms": 1204,
+      "server_prepare_ms": 113
+    },
+    {
+      "time_to_first_audio_ms": 1220,
+      "server_first_audio_ms": 1146,
+      "server_prepare_ms": 111
+    },
+    {
+      "time_to_first_audio_ms": 1352,
+      "server_first_audio_ms": 1154,
+      "server_prepare_ms": 117
+    },
+    {
+      "time_to_first_audio_ms": 1213,
+      "server_first_audio_ms": 1141,
+      "server_prepare_ms": 100
+    },
+    {
+      "time_to_first_audio_ms": 1387,
+      "server_first_audio_ms": 1226,
+      "server_prepare_ms": 109
+    },
+    {
+      "time_to_first_audio_ms": 1512,
+      "server_first_audio_ms": 1438,
+      "server_prepare_ms": 111
+    },
+    {
+      "time_to_first_audio_ms": 1370,
+      "server_first_audio_ms": 1291,
+      "server_prepare_ms": 118
+    },
+    {
+      "time_to_first_audio_ms": 1506,
+      "server_first_audio_ms": 1428,
+      "server_prepare_ms": 116
+    },
+    {
+      "time_to_first_audio_ms": 1486,
+      "server_first_audio_ms": 1397,
+      "server_prepare_ms": 107
+    },
+    {
+      "time_to_first_audio_ms": 1406,
+      "server_first_audio_ms": 1336,
+      "server_prepare_ms": 109
+    },
+    {
+      "time_to_first_audio_ms": 1316,
+      "server_first_audio_ms": 1245,
+      "server_prepare_ms": 108
+    },
+    {
+      "time_to_first_audio_ms": 1271,
+      "server_first_audio_ms": 1196,
+      "server_prepare_ms": 114
+    },
+    {
+      "time_to_first_audio_ms": 1374,
+      "server_first_audio_ms": 1257,
+      "server_prepare_ms": 111
+    },
+    {
+      "time_to_first_audio_ms": 1272,
+      "server_first_audio_ms": 1198,
+      "server_prepare_ms": 127
+    },
+    {
+      "time_to_first_audio_ms": 1534,
+      "server_first_audio_ms": 1275,
+      "server_prepare_ms": 105
+    },
+    {
+      "time_to_first_audio_ms": 1422,
+      "server_first_audio_ms": 1350,
+      "server_prepare_ms": 109
+    }
+  ]
+}

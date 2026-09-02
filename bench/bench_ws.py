@@ -2,12 +2,16 @@
 line until the first byte of audio arrives back. Same 20 lines and same
 definition as bench_turns.py (the HTTP baseline), so the numbers compare.
 
-Run (backend on :3001):
+Run (backend on :3001, or set BENCH_WS_URL):
     uv run --project server python bench/bench_ws.py <label>
+
+time_to_first_audio_ms   measured by this script (includes the network to the server)
+server_first_audio_ms    measured inside the server: user's line received -> first audio sent
 """
 
 import asyncio
 import json
+import os
 import statistics
 import sys
 import time
@@ -18,7 +22,8 @@ from websockets.asyncio.client import connect
 
 from bench_turns import LINES, p95
 
-URL = "ws://localhost:3001/ws/session"
+# Point at a deployed backend with BENCH_WS_URL=wss://.../ws/session
+URL = os.getenv("BENCH_WS_URL", "ws://localhost:3001/ws/session")
 
 
 async def main(label: str):
@@ -49,7 +54,11 @@ async def main(label: str):
                     raise RuntimeError(data["error"])
 
             ms = round((first_audio - sent) * 1000)
-            turns.append({"time_to_first_audio_ms": ms, "server_prepare_ms": server["prepareMs"]})
+            turns.append({
+                "time_to_first_audio_ms": ms,
+                "server_first_audio_ms": server["firstAudioMs"],
+                "server_prepare_ms": server["prepareMs"],
+            })
             history += [
                 {"role": "user", "text": text},
                 {"role": "persona", "text": reply},
