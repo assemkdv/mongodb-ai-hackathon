@@ -26,7 +26,7 @@ A low-latency conversational voice agent built on **Python / FastAPI**, **MongoD
 | **Real-time voice pipeline** | Speech in, an LLM reply streamed token by token, and synthesized audio streamed back, all overlapped instead of sequential. |
 | **Bidirectional WebSockets** | One persistent socket per session between browser and FastAPI, and a second between FastAPI and ElevenLabs. Audio is pushed as it is generated; the user can barge in mid-sentence. |
 | **Atlas Vector Search** | Every piece of user feedback is embedded with Voyage AI and retrieved by semantic similarity on each turn. **152 ms median, 238 ms p95** query time. |
-| **~50% lower voice latency** | Median time to first audio cut from **2.61 s to 1.25–1.41 s** by streaming end to end (see [benchmarks](#real-time-streaming)). |
+| **~50% lower voice latency** | Median time to first audio cut from **2.61 s to 1.26 s** (deployed) by streaming end to end (see [benchmarks](#real-time-streaming)). |
 | **Versioned agent memory** | Behaviour is stored as versioned MongoDB documents; corrections are applied in multi-document ACID transactions with a full audit trail. |
 | **Tested** | 26 pytest tests against a real MongoDB, including transactions, vector search, and the WebSocket loop. |
 
@@ -249,9 +249,10 @@ Time from the user's line to the first audio byte, 20 scripted turns (`bench/`):
 | Before: HTTP, full reply, then TTS     | 2.61 s     | 3.39 s |
 | WebSocket streaming, Claude Opus 5     | 1.84 s     | 2.85 s |
 | WebSocket streaming, Claude Sonnet 5.5 | 1.50 s     | 1.83 s |
-| **WebSocket streaming, Claude Haiku 5.5** | **1.25–1.41 s** | **1.40–2.12 s** |
+| WebSocket streaming, Claude Haiku 5.5 (laptop) | 1.20–1.41 s | 1.40–2.12 s |
+| **WebSocket streaming, Claude Haiku 5.5 (deployed)** | **1.26 s** | **1.47 s** |
 
-Measured with the backend on a laptop (two runs for Haiku 5.5); each turn also pays for the round trips from the laptop to Atlas.
+Laptop runs pay extra round trips from the laptop to Atlas. The deployed row is measured inside the server on Render (Oregon, next to the Atlas cluster), from receiving the user's line to sending the first audio byte. Each turn reports its own per-stage timing (`prepareMs`, `claudeFirstTokenMs`, `deliveryTagMs`, `firstPhraseSentMs`, `firstAudioMs`) in the WebSocket `done` message.
 
 ## Expressive speech
 

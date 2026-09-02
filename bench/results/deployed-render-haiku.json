@@ -2,118 +2,118 @@
   "label": "deployed-render-haiku",
   "summary": {
     "time_to_first_audio_ms": {
-      "median": 1388,
-      "p95": 1534
+      "median": 1344,
+      "p95": 1617
     },
     "server_first_audio_ms": {
-      "median": 1266,
-      "p95": 1438
+      "median": 1259,
+      "p95": 1473
     },
     "server_prepare_ms": {
-      "median": 111,
-      "p95": 127
+      "median": 110,
+      "p95": 165
     }
   },
   "turns": [
     {
-      "time_to_first_audio_ms": 1633,
-      "server_first_audio_ms": 1561,
-      "server_prepare_ms": 158
+      "time_to_first_audio_ms": 1552,
+      "server_first_audio_ms": 1473,
+      "server_prepare_ms": 165
     },
     {
-      "time_to_first_audio_ms": 1478,
-      "server_first_audio_ms": 1407,
-      "server_prepare_ms": 115
-    },
-    {
-      "time_to_first_audio_ms": 1442,
-      "server_first_audio_ms": 1350,
-      "server_prepare_ms": 109
-    },
-    {
-      "time_to_first_audio_ms": 1289,
-      "server_first_audio_ms": 1214,
-      "server_prepare_ms": 104
-    },
-    {
-      "time_to_first_audio_ms": 1390,
-      "server_first_audio_ms": 1204,
-      "server_prepare_ms": 113
-    },
-    {
-      "time_to_first_audio_ms": 1220,
-      "server_first_audio_ms": 1146,
+      "time_to_first_audio_ms": 1516,
+      "server_first_audio_ms": 1436,
       "server_prepare_ms": 111
     },
     {
-      "time_to_first_audio_ms": 1352,
-      "server_first_audio_ms": 1154,
-      "server_prepare_ms": 117
-    },
-    {
-      "time_to_first_audio_ms": 1213,
-      "server_first_audio_ms": 1141,
-      "server_prepare_ms": 100
-    },
-    {
-      "time_to_first_audio_ms": 1387,
-      "server_first_audio_ms": 1226,
-      "server_prepare_ms": 109
-    },
-    {
-      "time_to_first_audio_ms": 1512,
-      "server_first_audio_ms": 1438,
-      "server_prepare_ms": 111
-    },
-    {
-      "time_to_first_audio_ms": 1370,
-      "server_first_audio_ms": 1291,
-      "server_prepare_ms": 118
-    },
-    {
-      "time_to_first_audio_ms": 1506,
-      "server_first_audio_ms": 1428,
-      "server_prepare_ms": 116
-    },
-    {
-      "time_to_first_audio_ms": 1486,
-      "server_first_audio_ms": 1397,
-      "server_prepare_ms": 107
-    },
-    {
-      "time_to_first_audio_ms": 1406,
-      "server_first_audio_ms": 1336,
-      "server_prepare_ms": 109
-    },
-    {
-      "time_to_first_audio_ms": 1316,
-      "server_first_audio_ms": 1245,
+      "time_to_first_audio_ms": 1147,
+      "server_first_audio_ms": 1068,
       "server_prepare_ms": 108
     },
     {
-      "time_to_first_audio_ms": 1271,
-      "server_first_audio_ms": 1196,
-      "server_prepare_ms": 114
+      "time_to_first_audio_ms": 1331,
+      "server_first_audio_ms": 1246,
+      "server_prepare_ms": 117
     },
     {
-      "time_to_first_audio_ms": 1374,
-      "server_first_audio_ms": 1257,
+      "time_to_first_audio_ms": 1496,
+      "server_first_audio_ms": 1347,
+      "server_prepare_ms": 295
+    },
+    {
+      "time_to_first_audio_ms": 1418,
+      "server_first_audio_ms": 1295,
+      "server_prepare_ms": 110
+    },
+    {
+      "time_to_first_audio_ms": 1589,
+      "server_first_audio_ms": 1442,
       "server_prepare_ms": 111
     },
     {
-      "time_to_first_audio_ms": 1272,
-      "server_first_audio_ms": 1198,
-      "server_prepare_ms": 127
+      "time_to_first_audio_ms": 1617,
+      "server_first_audio_ms": 1342,
+      "server_prepare_ms": 110
     },
     {
-      "time_to_first_audio_ms": 1534,
-      "server_first_audio_ms": 1275,
-      "server_prepare_ms": 105
+      "time_to_first_audio_ms": 1271,
+      "server_first_audio_ms": 1190,
+      "server_prepare_ms": 110
     },
     {
-      "time_to_first_audio_ms": 1422,
-      "server_first_audio_ms": 1350,
+      "time_to_first_audio_ms": 1420,
+      "server_first_audio_ms": 1285,
+      "server_prepare_ms": 116
+    },
+    {
+      "time_to_first_audio_ms": 1318,
+      "server_first_audio_ms": 1237,
+      "server_prepare_ms": 99
+    },
+    {
+      "time_to_first_audio_ms": 1291,
+      "server_first_audio_ms": 1192,
+      "server_prepare_ms": 102
+    },
+    {
+      "time_to_first_audio_ms": 1687,
+      "server_first_audio_ms": 1604,
+      "server_prepare_ms": 136
+    },
+    {
+      "time_to_first_audio_ms": 1232,
+      "server_first_audio_ms": 1152,
+      "server_prepare_ms": 99
+    },
+    {
+      "time_to_first_audio_ms": 1375,
+      "server_first_audio_ms": 1272,
       "server_prepare_ms": 109
+    },
+    {
+      "time_to_first_audio_ms": 1320,
+      "server_first_audio_ms": 1178,
+      "server_prepare_ms": 118
+    },
+    {
+      "time_to_first_audio_ms": 1317,
+      "server_first_audio_ms": 1230,
+      "server_prepare_ms": 108
+    },
+    {
+      "time_to_first_audio_ms": 1358,
+      "server_first_audio_ms": 1279,
+      "server_prepare_ms": 112
+    },
+    {
+      "time_to_first_audio_ms": 1315,
+      "server_first_audio_ms": 1212,
+      "server_prepare_ms": 110
+    },
+    {
+      "time_to_first_audio_ms": 1294,
+      "server_first_audio_ms": 1201,
+      "server_prepare_ms": 108
     }
   ]
 }
